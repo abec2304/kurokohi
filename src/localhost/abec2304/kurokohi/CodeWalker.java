@@ -20,7 +20,7 @@ public class CodeWalker {
     public static final int COMPLEX_STEP = 3;
     public static final int END = 4;
     
-    public CodeWalker(byte[] code) {
+    public void init(byte[] code) {
         cis = new DataInputStream(bais = new ByteArrayInputStream(code));
         len = code.length;
     }

@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import localhost.abec2304.kurokohi.cp.ConstantPoolInfo;
 import localhost.abec2304.kurokohi.cp.ConstUtf8;
@@ -15,33 +16,21 @@ public class ClassPrinter {
     public String className;
     public ClassFile cf;
     public PrintStream out;
-    
+
     public ClassPrinter(String className, ClassFile cf, PrintStream out) {
         this.className = className;
         this.cf = cf;
         this.out = out;
     }
     
-    public static String padBegin(String s, int len) {
-        if(s.length() >= len)
-            return s;
+    public void printPadding(int len) {
+        if(len < 0)
+            len = 0;
         
-        char[] c = new char[len - s.length()];
-        for(int i = 0; i < c.length; i++)
+        char[] c = new char[len];
+        for(int i = 0; i < len; i++)
             c[i] = ' ';
-        
-        return new String(c).concat(s);
-    }
-    
-    public static String padEnd(String s, int len) {
-        if(s.length() >= len)
-            return s;
-        
-        char[] c = new char[len - s.length()];
-        for(int i = 0; i < c.length; i++)
-            c[i] = ' ';
-        
-        return s.concat(new String(c));
+        out.print(c);
     }
     
     public static String getUtf8(ConstantPoolInfo[] cp, int i) {
@@ -53,30 +42,45 @@ public class ClassPrinter {
     
     public static void main(String[] args) throws IOException {
         FileInputStream fis = new FileInputStream(args[0]);
-        print(args[0], fis, System.out);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        print(args[0], bis, System.out);
     }
     
-    public static void print(String className, InputStream is, PrintStream out) throws IOException {
+    public static void print(String className, InputStream is, OutputStream out) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(is);
-        DataInputStream dis = new DataInputStream(bis);
+        RapidPrinter rp = new RapidPrinter(out);
+        rp.printMarker();
+        print(className, bis, rp);
+    }
+    
+    public static void print(String className, BufferedInputStream is, PrintStream out) throws IOException {
+        DataInputStream dis = new DataInputStream(is);
         ClassFile cf = new ClassFile();
         cf.init(dis);
-        //dis.close();
-        new ClassPrinter(className, cf, out).print();
+        ClassPrinter classPrinter = new ClassPrinter(className, cf, out);
+        classPrinter.print();
     }
     
-    public void print() throws IOException {
-        out.println("class " + className);
-        out.println("  magic: 0x" + Long.toString(cf.magic, 16));
-        out.println("  minor version: " + cf.minorVersion);
-        out.println("  major version: " + cf.majorVersion);
-        out.println("  flags: 0x" + Integer.toString(cf.accessFlags, 16));
-        out.println("  this class: #" + cf.thisClass);
-        out.println("  super class: #" + cf.superClass);
+    public void print() {
+        out.print("class ");
+        out.println(className);
+        out.print("  magic: 0x");
+        out.println(Long.toString(cf.magic, 16));
+        out.print("  minor version: ");
+        out.println(cf.minorVersion);
+        out.print("  major version: ");
+        out.println(cf.majorVersion);
+        out.print("  flags: 0x");
+        out.println(Integer.toString(cf.accessFlags, 16));
+        out.print("  this class: #");
+        out.println(cf.thisClass);
+        out.print("  super class: #");
+        out.println(cf.superClass);
         
         String interfaces = "  interfaces:";
         for(int i = 0; i < cf.interfaces.length; i++) {
-            interfaces += " #" + cf.interfaces[i].index;
+            String next = " #".concat(Integer.toString(cf.interfaces[i].index));
+            interfaces = interfaces.concat(next);
         }
         out.println(interfaces);
         
@@ -93,60 +97,72 @@ public class ClassPrinter {
             if(type == null)
                 type = "???";
             
-            String text = padBegin("#" + i, 8) + " = " + type;
+            String index = Integer.toString(i);
+            int indexPad = 7 - index.length();
+            printPadding(indexPad);
+            out.print("#".concat(index));
+            out.print(" = ");
+            out.print(type);
             
             if(constant != null) {
-                text += padBegin(" ", 30 - text.length()) + constant;
+                printPadding(19 - type.length());
+                out.print(constant.toString());
             }
             
-            out.println(text);
+            out.println();
         }
         
         out.println("{");
         out.println();
         
-        for(int i = 0; i < cf.fields.length; i++) {
-            FieldInfo field = cf.fields[i];
-            String fieldName = getUtf8(cf.constantPool, field.nameIndex);
-            String fieldDesc = getUtf8(cf.constantPool, field.descriptorIndex);
-            out.println("  #" + field.nameIndex + " //" + fieldName);
-            out.println("    descriptor: #" + field.descriptorIndex + " //" + fieldDesc);
-            out.println("    flags: 0x" + Integer.toString(field.accessFlags, 16));
-            printAttributes(field.attributes, "    ");
-            out.println();
-        }
-       
-        for(int i = 0; i < cf.methods.length; i++) {
-            MethodInfo method = cf.methods[i];
-            String methodName = getUtf8(cf.constantPool, method.nameIndex);
-            String methodDesc = getUtf8(cf.constantPool, method.descriptorIndex);
-            out.println("  #" + method.nameIndex + " //" + methodName);
-            out.println("    descriptor: #" + method.descriptorIndex + " //" + methodDesc);
-            out.println("    flags: 0x" + Integer.toString(method.accessFlags, 16));
-            for(int j = 0; j < method.attributes.length; j++) {
-                AttributeInfo attribute = method.attributes[j];
-                String attributeName = getUtf8(cf.constantPool, attribute.attributeNameIndex);
-                out.println("    " + attributeName + ":");
-                if(attribute instanceof AttrUnknown && "Code".equals(attributeName)) {
-                    dumpCode((AttrUnknown)attribute);
-                } else {
-                    out.println("      NYI");
-                }
-            }
-            
-            out.println();
-        }
+        out.print("fields: ");
+        out.println(cf.fieldsCount);
+        printMemberArray(cf.fields);
+        out.println();
+        out.print("methods: ");
+        out.println(cf.methodsCount);
+        printMemberArray(cf.methods);
         
         out.println("}");
         
         printAttributes(cf.attributes, "");
+        
+        out.flush();
     }
 
+    public void printMemberArray(MemberInfo[] members) {
+        for(int i = 0; i < members.length; i++) {
+            MemberInfo member = members[i];
+            String memberName = getUtf8(cf.constantPool, member.nameIndex);
+            String memberDesc = getUtf8(cf.constantPool, member.descriptorIndex);
+            out.println("  #" + member.nameIndex + " //" + memberName);
+            out.println("    descriptor: #" + member.descriptorIndex + " //" + memberDesc);
+            out.println("    flags: 0x" + Integer.toString(member.accessFlags, 16));
+            printAttributes(member.attributes, "    ", member);
+            out.println();
+        }
+    }
+    
     public void printAttributes(AttributeInfo[] attributes, String padding) {
+        printAttributes(attributes, padding, null);
+    }
+    
+    public void printAttributes(AttributeInfo[] attributes, String padding, Info info) {
+        boolean isMethod = info instanceof MethodInfo;
         for(int j = 0; j < attributes.length; j++) {
             AttributeInfo attribute = attributes[j];
             String attributeName = getUtf8(cf.constantPool, attribute.attributeNameIndex);
             out.println(padding + attributeName + ":");
+            if(isMethod && attribute instanceof AttrUnknown) {
+                if("Code".equals(attributeName)) {
+                    try {
+                        dumpCode((AttrUnknown)attribute);
+                    } catch(IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                    continue;
+                }
+            }
             out.println(padding + "  NYI");
         }
     }
@@ -157,31 +173,52 @@ public class ClassPrinter {
         
         out.println("      stack=" + code.maxStack + ", locals=" + code.maxLocals + ", len=" + code.codeLength);
         
-        CodeWalker walker = new CodeWalker(code.code);
+        CodeWalker walker = new CodeWalker();
+        walker.init(code.code);
+        boolean newLine = false;
         walk: for(;;) {
             int initial = walker.pos();
             if(walker.stepOver()) {
-                String padded = padBegin(initial + "", 10);
                 String name = Opcode.OPCODE_NAMES[walker.opcode];
-                out.println(padded + ": " + name + " //0x" + Integer.toString(walker.opcode, 16));
+                String index = Integer.toString(initial);
+                printPadding(10 - index.length());
+                out.print(index);
+                out.print(": ");
+                out.print(name == null ? "null" : name);
+                out.print(" //0x");
+                out.println(Integer.toString(walker.opcode, 16));
                 continue;
             }
             
             for(;;) {
                 int nextStep = walker.nextStep();
-                if(nextStep == walker.NEXT_STEP)
+                if(nextStep == walker.NEXT_STEP) {
                     continue;
-                else if(nextStep == walker.COMPLEX_STEP)
-                    printComplex(out, walker.multiStep());
-                else if(nextStep == walker.END)
+                } else if(nextStep == walker.COMPLEX_STEP) {
+                    printComplex(walker.multiStep());
+                    newLine = true;
+                } else if(nextStep == walker.END) {
                     break walk;
+                }
                 
-                if(nextStep != walker.DO_STEP)
+                if(nextStep != walker.DO_STEP) {
                     continue;
+                }
                 
-                String name = Opcode.OPCODE_NAMES[walker.opcode] + "";
-                String padded = padBegin(initial + "", 10);
-                out.println(padded + ": " + padEnd(name, 16) + toString(walker.operandValues, ' '));
+                if(newLine) {
+                    out.println();
+                    newLine = false;
+                }
+                
+                String name = Opcode.OPCODE_NAMES[walker.opcode];
+                String index = Integer.toString(initial);
+                int indexPad = 10 - index.length();
+                printPadding(indexPad);
+                out.print(index);
+                out.print(": ");
+                out.print(name);
+                printPadding(16 - name.length());
+                out.println(toString(walker.operandValues, ' '));
                 break;
             }
         }
@@ -204,16 +241,16 @@ public class ClassPrinter {
         printAttributes(code.attributes, "      ");
     }
 
-    public void printComplex(PrintStream out, Object o) {
+    public void printComplex(Object o) {
         if(o instanceof int[][]) {
             int[][] pairs = (int[][])o;
         
             for(int i = 0; i < pairs.length; i++) {
-                out.println("[" + pairs[i][0] + ":" + pairs[i][1] + "]");
+                out.print(" [" + pairs[i][0] + ":" + pairs[i][1] + "]");
             }
         } else if(o instanceof int[]) {
             int[] array = (int[])o;
-            out.println("[" + toString(array, ',') + "]");
+            out.print(" [" + toString(array, ',') + "]");
         } else {
             //
         }
