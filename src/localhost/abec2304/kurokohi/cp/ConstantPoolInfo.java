@@ -24,7 +24,7 @@ public abstract class ConstantPoolInfo implements Info {
         /*14*/null,
         /*15*/"MethodHandle",
         /*16*/"MethodType",
-        /*17*/null,
+        /*17*/"Dynamic",
         /*18*/"InvokeDynamic",
         /*19*/"Module",
         /*20*/"Package"

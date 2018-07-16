@@ -42,7 +42,7 @@ public class ClassFile {
             }
             
             if(clazz == null)
-                clazz = ConstantPoolInfo.MAPPING[2];
+                throw new IOException("truncated constant pool");
             
             try {
                 Info info = (Info)clazz.newInstance();
