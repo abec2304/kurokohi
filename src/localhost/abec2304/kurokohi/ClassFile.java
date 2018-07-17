@@ -34,25 +34,13 @@ public class ClassFile {
             int tag = dis.readUnsignedByte();
             dis.reset();
             
-            Class clazz;
-            if(tag < ConstantPoolInfo.MAPPING.length) {
-                clazz = ConstantPoolInfo.MAPPING[tag];
-            } else {
-                clazz = null;
-            }
+            ConstantPoolInfo info = ConstantPoolInfo.getConstant(tag);
             
-            if(clazz == null)
+            if(info == null)
                 throw new IOException("truncated constant pool");
             
-            try {
-                Info info = (Info)clazz.newInstance();
-                info.init(dis);
-                constantPool[i] = (ConstantPoolInfo)info;
-            } catch(IllegalAccessException iae) {
-                iae.printStackTrace();
-            } catch(InstantiationException ie) {
-                ie.printStackTrace();
-            }
+            info.init(dis);
+            constantPool[i] = (ConstantPoolInfo)info;
             
             if(tag == 5 || tag == 6)
                 i++;

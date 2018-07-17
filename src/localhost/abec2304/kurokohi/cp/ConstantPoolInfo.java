@@ -4,7 +4,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import localhost.abec2304.kurokohi.Info;
 
-public abstract class ConstantPoolInfo implements Info {
+public abstract class ConstantPoolInfo implements Info, Cloneable {
 
     public static String[] NAMES = {
         /*00*/null,
@@ -31,7 +31,7 @@ public abstract class ConstantPoolInfo implements Info {
     };
 
     // must be after NAMES
-    public static final Class[] MAPPING = getMapping();
+    private static final ConstantPoolInfo[] NEWMAPPING = getNewMapping();
     
     public int tag;
     
@@ -44,8 +44,8 @@ public abstract class ConstantPoolInfo implements Info {
     }
     
     public static void main(String[] args) {
-        for(int i = 0; i < MAPPING.length; i++) {
-            System.out.println(i + "[" + MAPPING[i] + "]");
+        for(int i = 0; i < NEWMAPPING.length; i++) {
+            System.out.println(i + "[" + NEWMAPPING[i] + "]");
         }
     }
 
@@ -66,6 +66,51 @@ public abstract class ConstantPoolInfo implements Info {
         }
         
         return classes;
+    }
+    
+    public static ConstantPoolInfo getConstant(int tag) {
+        ConstantPoolInfo info;
+        if(tag < NEWMAPPING.length) {
+            info = NEWMAPPING[tag];
+        } else {
+            return null;
+        }
+        
+        if(info != null)
+            return (ConstantPoolInfo)info.clone();
+        
+        return null;
+    }
+    
+    private static ConstantPoolInfo[] getNewMapping() {
+        String cls = new ConstClass().getClass().getName();
+        String prefix = cls.substring(0, cls.indexOf("Const") + 5);
+        
+        ConstantPoolInfo[] instances = new ConstantPoolInfo[NAMES.length];
+        for(int i = 0; i < NAMES.length; i++) {
+            if(NAMES[i] == null)
+                continue;
+            
+            try {
+                instances[i] = (ConstantPoolInfo)Class.forName(prefix + NAMES[i]).newInstance();
+            } catch(ClassNotFoundException cnfe) {
+                cnfe.printStackTrace();
+            } catch(IllegalAccessException iae) {
+                iae.printStackTrace();
+            } catch(InstantiationException ie) {
+                ie.printStackTrace();
+            }
+        }
+        
+        return instances;
+    }
+    
+    protected Object clone() {
+        try {
+            return super.clone();
+        } catch(CloneNotSupportedException cnse) {
+            return null;
+        }
     }
     
 }

@@ -1,5 +1,6 @@
 package localhost.abec2304.kurokohi.lazy;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,7 @@ public class LazyAttrCode extends AttributeInfo {
         if(base.info == null)
             throw new IllegalArgumentException("uninitialized attribute");
         
-        InputStream sis = new SequenceInputStream(base.info.elements());
+        InputStream sis = new BufferedInputStream(new SequenceInputStream(base.info.elements()));
         DataInputStream dis = new DataInputStream(sis);
         
         int maxStack = dis.readUnsignedShort();

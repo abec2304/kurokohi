@@ -17,7 +17,9 @@ public class ClassPrinter {
     public ClassFile cf;
     public PrintStream out;
 
-    public ClassPrinter(String className, ClassFile cf, PrintStream out) {
+    private final CodeWalker codeWalker = new CodeWalker();
+    
+    public void init(String className, ClassFile cf, PrintStream out) {
         this.className = className;
         this.cf = cf;
         this.out = out;
@@ -46,7 +48,7 @@ public class ClassPrinter {
         print(args[0], bis, System.out);
     }
     
-    public static void print(String className, InputStream is, OutputStream out) throws IOException {
+    public static void printEncoded(String className, InputStream is, OutputStream out) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(is);
         RapidPrinter rp = new RapidPrinter(out);
         rp.printMarker();
@@ -57,7 +59,8 @@ public class ClassPrinter {
         DataInputStream dis = new DataInputStream(is);
         ClassFile cf = new ClassFile();
         cf.init(dis);
-        ClassPrinter classPrinter = new ClassPrinter(className, cf, out);
+        ClassPrinter classPrinter = new ClassPrinter();
+        classPrinter.init(className, cf, out);
         classPrinter.print();
     }
     
@@ -79,7 +82,7 @@ public class ClassPrinter {
         
         String interfaces = "  interfaces:";
         for(int i = 0; i < cf.interfaces.length; i++) {
-            String next = " #".concat(Integer.toString(cf.interfaces[i].index));
+            String next = " #".concat(Integer.toString(cf.interfaces[i].index, 10));
             interfaces = interfaces.concat(next);
         }
         out.println(interfaces);
@@ -97,10 +100,11 @@ public class ClassPrinter {
             if(type == null)
                 type = "???";
             
-            String index = Integer.toString(i);
+            String index = Integer.toString(i, 10);
             int indexPad = 7 - index.length();
             printPadding(indexPad);
-            out.print("#".concat(index));
+            out.print("#");
+            out.print(index);
             out.print(" = ");
             out.print(type);
             
@@ -173,35 +177,34 @@ public class ClassPrinter {
         
         out.println("      stack=" + code.maxStack + ", locals=" + code.maxLocals + ", len=" + code.codeLength);
         
-        CodeWalker walker = new CodeWalker();
-        walker.init(code.code);
+        codeWalker.init(code.code);
         boolean newLine = false;
         walk: for(;;) {
-            int initial = walker.pos();
-            if(walker.stepOver()) {
-                String name = Opcode.OPCODE_NAMES[walker.opcode];
-                String index = Integer.toString(initial);
+            int initial = codeWalker.pos();
+            if(codeWalker.stepOver()) {
+                String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
+                String index = Integer.toString(initial, 10);
                 printPadding(10 - index.length());
                 out.print(index);
                 out.print(": ");
                 out.print(name == null ? "null" : name);
                 out.print(" //0x");
-                out.println(Integer.toString(walker.opcode, 16));
+                out.println(Integer.toString(codeWalker.opcode, 16));
                 continue;
             }
             
             for(;;) {
-                int nextStep = walker.nextStep();
-                if(nextStep == walker.NEXT_STEP) {
+                int nextStep = codeWalker.nextStep();
+                if(nextStep == codeWalker.NEXT_STEP) {
                     continue;
-                } else if(nextStep == walker.COMPLEX_STEP) {
-                    printComplex(walker.multiStep());
+                } else if(nextStep == codeWalker.COMPLEX_STEP) {
+                    printComplex(codeWalker.multiStep());
                     newLine = true;
-                } else if(nextStep == walker.END) {
+                } else if(nextStep == codeWalker.END) {
                     break walk;
                 }
                 
-                if(nextStep != walker.DO_STEP) {
+                if(nextStep != codeWalker.DO_STEP) {
                     continue;
                 }
                 
@@ -210,15 +213,16 @@ public class ClassPrinter {
                     newLine = false;
                 }
                 
-                String name = Opcode.OPCODE_NAMES[walker.opcode];
-                String index = Integer.toString(initial);
+                String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
+                String index = Integer.toString(initial, 10);
                 int indexPad = 10 - index.length();
                 printPadding(indexPad);
                 out.print(index);
                 out.print(": ");
                 out.print(name);
                 printPadding(16 - name.length());
-                out.println(toString(walker.operandValues, ' '));
+                printIntArray(codeWalker.operandValues, codeWalker.operandsPos, ' ');
+                out.println();
                 break;
             }
         }
@@ -250,24 +254,24 @@ public class ClassPrinter {
             }
         } else if(o instanceof int[]) {
             int[] array = (int[])o;
-            out.print(" [" + toString(array, ',') + "]");
+            out.print(" [");
+            printIntArray(array, array.length, ',');
+            out.print("]");
         } else {
             //
         }
     }
     
-    public static String toString(int[] array, char c) {
-        if(array == null || array.length < 1)
-            return "";
+    public void printIntArray(int[] array, int len, char c) {
+        if(array == null || len < 1)
+            return;
         
-        String chr = new Character(c).toString();
+        out.print(array[0]);
         
-        String s = Integer.toString(array[0]);
-        for(int i = 1; i < array.length; i++) {
-            s += chr.concat(Integer.toString(array[i]));
+        for(int i = 1; i < len; i++) {
+            out.print(c);
+            out.print(array[i]);
         }
-        
-        return s;
     }
     
 }

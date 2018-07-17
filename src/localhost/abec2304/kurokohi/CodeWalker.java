@@ -8,7 +8,7 @@ public class CodeWalker {
 
     public int opcode;
     public int operandsPos;
-    public int[] operandValues;
+    public final int[] operandValues = new int[8];
 
     private byte[] operands;
     private int len;
@@ -36,12 +36,12 @@ public class CodeWalker {
         }
         
         opcode = cis.readUnsignedByte();
-        operandsPos = 0;
         operands = Operand.TYPE_OF_OPERANDS[opcode];
-        operandValues = operands == null ? null : new int[operands.length];
         
         if(operands == null)
             return true;
+        
+        operandsPos = 0;
         
         return false;
     }
