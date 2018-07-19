@@ -48,25 +48,6 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
             System.out.println(i + "[" + NEWMAPPING[i] + "]");
         }
     }
-
-    private static Class[] getMapping() {
-        String cls = new ConstClass().getClass().getName();
-        String prefix = cls.substring(0, cls.indexOf("Const") + 5);
-        
-        Class[] classes = new Class[NAMES.length];
-        for(int i = 0; i < NAMES.length; i++) {
-            if(NAMES[i] == null)
-                continue;
-            
-            try {
-                classes[i] = Class.forName(prefix + NAMES[i]);
-            } catch(ClassNotFoundException cnfe) {
-                cnfe.printStackTrace();
-            }
-        }
-        
-        return classes;
-    }
     
     public static ConstantPoolInfo getConstant(int tag) {
         ConstantPoolInfo info;

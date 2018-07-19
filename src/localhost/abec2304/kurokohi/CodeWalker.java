@@ -10,8 +10,8 @@ public class CodeWalker {
     public int operandsPos;
     public final int[] operandValues = new int[8];
 
-    private byte[] operands;
-    private int len;
+    public byte[] operands;
+    public int len;
     private ByteArrayInputStream bais;
     private DataInputStream cis;
     
@@ -85,6 +85,7 @@ public class CodeWalker {
                 }
                 break;
             default:
+                operandValues[operandsPos] = -1;
                 return COMPLEX_STEP;
         }
         

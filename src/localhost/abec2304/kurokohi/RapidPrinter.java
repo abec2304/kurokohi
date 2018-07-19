@@ -1,30 +1,33 @@
 package localhost.abec2304.kurokohi;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import localhost.abec2304.kurokohi.util.NullOutputStream;
 
 public class RapidPrinter extends PrintStream {
 
+    public OutputStream outs;
     public IOException exception;
     
-    public RapidPrinter(OutputStream out) {
-        super(out, false);
-    }
-
-    public void superClose() {
+    private static final OutputStream NULL_STREAM = new NullOutputStream();
+    
+    public RapidPrinter() {
+        super(NULL_STREAM, false);
         super.close();
+        out = null;
     }
     
-    public void init(OutputStream out) {
-        this.out = out;
+    public void init(OutputStream outputStream) {
+        outs = outputStream;
     }
     
     public void printMarker() {
         try {
-            out.write(0xFF);
-            out.write(0xFE);
+            outs.write(0xFF);
+            outs.write(0xFE);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -32,7 +35,7 @@ public class RapidPrinter extends PrintStream {
     
     public void write(int by) {
         try {
-            out.write(by);
+            outs.write(by);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -40,7 +43,7 @@ public class RapidPrinter extends PrintStream {
     
     public void write(byte[] arr, int off, int len) {
         try {
-            out.write(arr, off, len);
+            outs.write(arr, off, len);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -48,16 +51,19 @@ public class RapidPrinter extends PrintStream {
     
     public void flush() {
         try {
-            out.flush();
+            outs.flush();
         } catch(IOException ioe) {
             exception = ioe;
         }
     }
     
     public void close() {
+        if(outs == null)
+            return;
+        
         flush();
         try {
-            out.close();
+            outs.close();
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -73,7 +79,7 @@ public class RapidPrinter extends PrintStream {
     }
     
     public void print(String str) {
-        OutputStream outputStream = out;
+        OutputStream outputStream = outs;
         int len = str.length();
         
         try {
@@ -88,7 +94,7 @@ public class RapidPrinter extends PrintStream {
     }
     
     public void print(char[] arr) {
-        OutputStream outputStream = out;
+        OutputStream outputStream = outs;
         int len = arr.length;
         
         try {
@@ -104,8 +110,8 @@ public class RapidPrinter extends PrintStream {
     
     public void print(char chr) {
         try {
-            out.write(chr & 0xFF);
-            out.write(chr >>> 8 & 0xFF);
+            outs.write(chr & 0xFF);
+            outs.write(chr >>> 8 & 0xFF);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -133,8 +139,8 @@ public class RapidPrinter extends PrintStream {
     
     public void println() {
         try {
-            out.write('\n');
-            out.write(0);
+            outs.write('\n');
+            outs.write(0);
         } catch(IOException ioe) {
             exception = ioe;
         }

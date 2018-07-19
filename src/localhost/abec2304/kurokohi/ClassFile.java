@@ -15,7 +15,7 @@ public class ClassFile {
     public int thisClass;
     public int superClass;
     public int interfacesCount;
-    public InterfaceInfo[] interfaces; // move array to class
+    public int[] interfaces;
     public int fieldsCount;
     public FieldInfo[] fields;
     public int methodsCount;
@@ -49,11 +49,9 @@ public class ClassFile {
         thisClass = dis.readUnsignedShort();
         superClass = dis.readUnsignedShort();
         interfacesCount = dis.readUnsignedShort();
-        interfaces = new InterfaceInfo[interfacesCount];
+        interfaces = new int[interfacesCount];
         for(int i = 0; i < interfacesCount; i++) {
-            Info info = new InterfaceInfo();
-            info.init(dis);
-            interfaces[i] = (InterfaceInfo)info;
+            interfaces[i] = dis.readUnsignedShort();
         }
         fieldsCount = dis.readUnsignedShort();
         fields = new FieldInfo[fieldsCount];

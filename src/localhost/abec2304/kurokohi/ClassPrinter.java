@@ -29,10 +29,8 @@ public class ClassPrinter {
         if(len < 0)
             len = 0;
         
-        char[] c = new char[len];
         for(int i = 0; i < len; i++)
-            c[i] = ' ';
-        out.print(c);
+            out.print(' ');
     }
     
     public static String getUtf8(ConstantPoolInfo[] cp, int i) {
@@ -50,7 +48,8 @@ public class ClassPrinter {
     
     public static void printEncoded(String className, InputStream is, OutputStream out) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(is);
-        RapidPrinter rp = new RapidPrinter(out);
+        RapidPrinter rp = new RapidPrinter();
+        rp.init(out);
         rp.printMarker();
         print(className, bis, rp);
     }
@@ -82,7 +81,7 @@ public class ClassPrinter {
         
         String interfaces = "  interfaces:";
         for(int i = 0; i < cf.interfaces.length; i++) {
-            String next = " #".concat(Integer.toString(cf.interfaces[i].index, 10));
+            String next = " #".concat(Integer.toString(cf.interfaces[i], 10));
             interfaces = interfaces.concat(next);
         }
         out.println(interfaces);
@@ -178,7 +177,6 @@ public class ClassPrinter {
         out.println("      stack=" + code.maxStack + ", locals=" + code.maxLocals + ", len=" + code.codeLength);
         
         codeWalker.init(code.code);
-        boolean newLine = false;
         walk: for(;;) {
             int initial = codeWalker.pos();
             if(codeWalker.stepOver()) {
@@ -193,35 +191,37 @@ public class ClassPrinter {
                 continue;
             }
             
+            if(codeWalker.operandsPos < 0) // END
+                break walk;
+            
+            String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
+            String index = Integer.toString(initial, 10);
+            int indexPad = 10 - index.length();
+            printPadding(indexPad);
+            out.print(index);
+            out.print(": ");
+            out.print(name);
+            printPadding(15 - name.length());
+            
             for(;;) {
                 int nextStep = codeWalker.nextStep();
                 if(nextStep == codeWalker.NEXT_STEP) {
+                    out.print(' ');
+                    out.print(codeWalker.operandValues[codeWalker.operandsPos - 1]);
                     continue;
                 } else if(nextStep == codeWalker.COMPLEX_STEP) {
                     printComplex(codeWalker.multiStep());
-                    newLine = true;
+                    if(codeWalker.operandsPos == codeWalker.operands.length) {
+                        out.println();
+                        break;
+                    }
+                    continue;
                 } else if(nextStep == codeWalker.END) {
                     break walk;
                 }
-                
-                if(nextStep != codeWalker.DO_STEP) {
-                    continue;
-                }
-                
-                if(newLine) {
-                    out.println();
-                    newLine = false;
-                }
-                
-                String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
-                String index = Integer.toString(initial, 10);
-                int indexPad = 10 - index.length();
-                printPadding(indexPad);
-                out.print(index);
-                out.print(": ");
-                out.print(name);
-                printPadding(16 - name.length());
-                printIntArray(codeWalker.operandValues, codeWalker.operandsPos, ' ');
+
+                out.print(' ');
+                out.print(codeWalker.operandValues[codeWalker.operandsPos - 1]);
                 out.println();
                 break;
             }
