@@ -16,6 +16,7 @@ public class ClassPrinter {
     public String className;
     public ClassFile cf;
     public PrintStream out;
+    public boolean pre1_0;
 
     private final CodeWalker codeWalker = new CodeWalker();
     
@@ -23,6 +24,8 @@ public class ClassPrinter {
         this.className = className;
         this.cf = cf;
         this.out = out;
+        
+        pre1_0 = cf.majorVersion == 45 && cf.minorVersion < 3;
     }
     
     public void printPadding(int len) {
@@ -138,9 +141,15 @@ public class ClassPrinter {
             MemberInfo member = members[i];
             String memberName = getUtf8(cf.constantPool, member.nameIndex);
             String memberDesc = getUtf8(cf.constantPool, member.descriptorIndex);
-            out.println("  #" + member.nameIndex + " //" + memberName);
-            out.println("    descriptor: #" + member.descriptorIndex + " //" + memberDesc);
-            out.println("    flags: 0x" + Integer.toString(member.accessFlags, 16));
+            out.print("  #");
+            out.print(member.nameIndex);
+            out.print(" //");
+            out.println(memberName);
+            out.print("    descriptor: #");
+            out.print(member.descriptorIndex + " //");
+            out.println(memberDesc);
+            out.print("    flags: 0x");
+            out.println(Integer.toString(member.accessFlags, 16));
             printAttributes(member.attributes, "    ", member);
             out.println();
         }
@@ -159,7 +168,7 @@ public class ClassPrinter {
             if(isMethod && attribute instanceof AttrUnknown) {
                 if("Code".equals(attributeName)) {
                     try {
-                        dumpCode((AttrUnknown)attribute);
+                        dumpCode((AttrUnknown)attribute, codeWalker);
                     } catch(IOException ioe) {
                         ioe.printStackTrace();
                     }
@@ -170,9 +179,9 @@ public class ClassPrinter {
         }
     }
     
-    public void dumpCode(AttrUnknown attribute) throws IOException {
+    public void dumpCode(AttrUnknown attribute, CodeWalker codeWalker) throws IOException {
         LazyAttrCode code = new LazyAttrCode();
-        code.init(attribute);
+        code.init(attribute, pre1_0);
         
         out.println("      stack=" + code.maxStack + ", locals=" + code.maxLocals + ", len=" + code.codeLength);
         

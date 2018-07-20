@@ -3,6 +3,8 @@ package localhost.abec2304.kurokohi;
 import java.io.DataInputStream;
 import java.io.IOException;
 import localhost.abec2304.kurokohi.cp.ConstantPoolInfo;
+import localhost.abec2304.kurokohi.cp.ConstUtf8;
+import localhost.abec2304.kurokohi.util.CharBuffer;
 
 public class ClassFile {
     
@@ -24,6 +26,8 @@ public class ClassFile {
     public AttributeInfo[] attributes;
     
     public void init(DataInputStream dis) throws IOException {
+        CharBuffer buffer = new CharBuffer();
+        
         magic = dis.readInt() & 0xFFFFFFFFl;
         minorVersion = dis.readUnsignedShort();
         majorVersion = dis.readUnsignedShort();
@@ -40,6 +44,15 @@ public class ClassFile {
                 throw new IOException("truncated constant pool");
             
             info.init(dis);
+            
+            if(info instanceof ConstUtf8) {
+                try {
+                    ((ConstUtf8)info).initString(buffer);
+                } catch(IOException ioe) {
+                    ioe.printStackTrace();
+                }
+            }
+            
             constantPool[i] = (ConstantPoolInfo)info;
             
             if(tag == 5 || tag == 6)

@@ -19,25 +19,28 @@ public class LazyAttrCode extends AttributeInfo {
     public int attributesCount;
     public AttributeInfo[] attributes;
 
-    public void init(AttrUnknown base) throws IOException {
+    public void init(AttrUnknown base, boolean pre1_0) throws IOException {
         if(base.info == null)
-            throw new IllegalArgumentException("uninitialized attribute");
+            throw new IOException("uninitialized attribute");
         
         InputStream sis = new BufferedInputStream(new SequenceInputStream(base.info.elements()));
         DataInputStream dis = new DataInputStream(sis);
         
-        int maxStack = dis.readUnsignedShort();
-        int maxLocals = dis.readUnsignedShort();
-        long codeLength = dis.readInt() & 0xFFFFFFFFl;
+        if(pre1_0) {
+            maxStack = dis.readUnsignedByte();
+            maxLocals = dis.readUnsignedByte();
+            codeLength = dis.readUnsignedShort();
+        } else {
+            maxStack = dis.readUnsignedShort();
+            maxLocals = dis.readUnsignedShort();
+            codeLength = dis.readInt() & 0xFFFFFFFFl;
+        }
         
         if(codeLength <= 0 || codeLength >= 65536)
-            throw new IllegalArgumentException("codeLength: 0 < " + codeLength + " < 65536 = false");
+            throw new IOException("codeLength: 0 < " + codeLength + " < 65536 = false");
         
         this.attributeNameIndex = base.attributeNameIndex;
         this.attributeLength = base.attributeLength;
-        this.maxStack = maxStack;
-        this.maxLocals = maxLocals;
-        this.codeLength = codeLength;
         
         this.code = new byte[(int)codeLength];
         dis.readFully(code);
