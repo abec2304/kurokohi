@@ -9,7 +9,6 @@ public class ConstBytes extends ConstantPoolInfo {
     public byte[] bytes;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         length = dis.readUnsignedShort();
         bytes = new byte[length];
         dis.readFully(bytes);

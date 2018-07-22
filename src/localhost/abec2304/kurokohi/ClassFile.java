@@ -34,9 +34,7 @@ public class ClassFile {
         constantPoolCount = dis.readUnsignedShort();
         constantPool = new ConstantPoolInfo[constantPoolCount];
         for(int i = 1; i < constantPoolCount; i++) {
-            dis.mark(1);
-            int tag = dis.readUnsignedByte();
-            dis.reset();
+            int tag = dis.readUnsignedByte();  
             
             ConstantPoolInfo info = ConstantPoolInfo.getConstant(tag);
             
@@ -53,7 +51,7 @@ public class ClassFile {
                 }
             }
             
-            constantPool[i] = (ConstantPoolInfo)info;
+            constantPool[i] = info;
             
             if(tag == 5 || tag == 6)
                 i++;

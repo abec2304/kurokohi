@@ -8,7 +8,6 @@ public abstract class IntegerOrFloat extends ConstantPoolInfo {
     public long bytes;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         bytes = dis.readInt() & 0xFFFFFFFFl;
     }
 

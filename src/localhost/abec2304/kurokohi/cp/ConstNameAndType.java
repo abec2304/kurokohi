@@ -9,7 +9,6 @@ public class ConstNameAndType extends ConstantPoolInfo {
     public int descriptorIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         nameIndex = dis.readUnsignedShort();
         descriptorIndex = dis.readUnsignedShort();
     }

@@ -9,9 +9,9 @@ public class CodeWalker {
     public int opcode;
     public int operandsPos;
     public final int[] operandValues = new int[8];
-
     public byte[] operands;
-    public int len;
+    
+    private int len;
     private ByteArrayInputStream bais;
     private DataInputStream cis;
     

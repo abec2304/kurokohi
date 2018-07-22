@@ -50,14 +50,13 @@ public class ClassPrinter {
     }
     
     public static void printEncoded(String className, InputStream is, OutputStream out) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(is);
         RapidPrinter rp = new RapidPrinter();
         rp.init(out);
         rp.printMarker();
-        print(className, bis, rp);
+        print(className, is, rp);
     }
     
-    public static void print(String className, BufferedInputStream is, PrintStream out) throws IOException {
+    public static void print(String className, InputStream is, PrintStream out) throws IOException {
         DataInputStream dis = new DataInputStream(is);
         ClassFile cf = new ClassFile();
         cf.init(dis);
@@ -146,7 +145,8 @@ public class ClassPrinter {
             out.print(" //");
             out.println(memberName);
             out.print("    descriptor: #");
-            out.print(member.descriptorIndex + " //");
+            out.print(member.descriptorIndex);
+            out.print(" //");
             out.println(memberDesc);
             out.print("    flags: 0x");
             out.println(Integer.toString(member.accessFlags, 16));

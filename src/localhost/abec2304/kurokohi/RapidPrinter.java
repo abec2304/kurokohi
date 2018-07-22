@@ -79,14 +79,14 @@ public class RapidPrinter extends PrintStream {
     }
     
     public void print(String str) {
-        OutputStream outputStream = outs;
+        OutputStream outs = this.outs;
         int len = str.length();
         
         try {
             for(int i = 0; i < len; i++) {
                 int c = str.charAt(i);
-                outputStream.write(c & 0xFF);
-                outputStream.write(c >>> 8 & 0xFF);
+                outs.write(c & 0xFF);
+                outs.write(c >>> 8 & 0xFF);
             }
         } catch(IOException ioe) {
             exception = ioe;
@@ -94,14 +94,14 @@ public class RapidPrinter extends PrintStream {
     }
     
     public void print(char[] arr) {
-        OutputStream outputStream = outs;
+        OutputStream outs = this.outs;
         int len = arr.length;
         
         try {
             for(int i = 0; i < len; i++) {
                 int c = arr[i];
-                outputStream.write(c & 0xFF);
-                outputStream.write(c >>> 8 & 0xFF);
+                outs.write(c & 0xFF);
+                outs.write(c >>> 8 & 0xFF);
             }
         } catch(IOException ioe) {
             exception = ioe;

@@ -8,7 +8,6 @@ public class ConstMethodType extends ConstantPoolInfo {
     public int descriptorIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         descriptorIndex = dis.readUnsignedShort();
     }
     

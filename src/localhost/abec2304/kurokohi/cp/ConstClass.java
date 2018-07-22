@@ -8,12 +8,11 @@ public class ConstClass extends ConstantPoolInfo {
     public int nameIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         nameIndex = dis.readUnsignedShort();
     }
     
     public String toString() {
-        return "#" + nameIndex;
+        return "#".concat(Integer.toString(nameIndex, 10));
     }
     
 }

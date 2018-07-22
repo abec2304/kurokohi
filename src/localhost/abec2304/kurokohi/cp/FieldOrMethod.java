@@ -9,7 +9,6 @@ public abstract class FieldOrMethod extends ConstantPoolInfo {
     public int nameAndTypeIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         classIndex = dis.readUnsignedShort();
         nameAndTypeIndex = dis.readUnsignedShort();
     }

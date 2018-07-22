@@ -34,10 +34,6 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
     private static final ConstantPoolInfo[] NEWMAPPING = getNewMapping();
     
     public int tag;
-    
-    public void init(DataInputStream dis) throws IOException {
-        tag = dis.readUnsignedByte();
-    }
 
     public String getName() {
         return tag < NAMES.length && tag >= 0 ? NAMES[tag] : null;
@@ -74,6 +70,7 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
             
             try {
                 instances[i] = (ConstantPoolInfo)Class.forName(prefix + NAMES[i]).newInstance();
+                instances[i].tag = i;
             } catch(ClassNotFoundException cnfe) {
                 cnfe.printStackTrace();
             } catch(IllegalAccessException iae) {
@@ -92,6 +89,10 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
         } catch(CloneNotSupportedException cnse) {
             return null;
         }
+    }
+    
+    public String toString() {
+        return "-";
     }
     
 }

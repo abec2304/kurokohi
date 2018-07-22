@@ -9,7 +9,6 @@ public class ConstMethodHandle extends ConstantPoolInfo {
     public int referenceIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         referenceKind = dis.readUnsignedByte();
         referenceIndex = dis.readUnsignedShort();
     }

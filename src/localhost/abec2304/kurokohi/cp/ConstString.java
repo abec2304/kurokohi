@@ -8,7 +8,6 @@ public class ConstString extends ConstantPoolInfo {
     public int stringIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
         stringIndex = dis.readUnsignedShort();
     }
     

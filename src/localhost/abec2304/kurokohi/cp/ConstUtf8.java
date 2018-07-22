@@ -12,8 +12,6 @@ public class ConstUtf8 extends ConstantPoolInfo {
     public String string;
     
     public void init(DataInputStream dis) throws IOException {
-        super.init(dis);
-        
         length = dis.readUnsignedShort();
         bytes = new byte[length];
         dis.readFully(bytes);
@@ -32,7 +30,7 @@ public class ConstUtf8 extends ConstantPoolInfo {
     }
 
     public void initString(CharBuffer buffer) throws UTFDataFormatException {
-        buffer.reset();
+        buffer.reset(length);
         
         int c, b, a;
         int i = 0;
