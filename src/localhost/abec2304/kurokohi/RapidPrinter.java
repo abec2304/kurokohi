@@ -13,6 +13,7 @@ public class RapidPrinter extends PrintStream {
     public IOException exception;
     
     private static final OutputStream NULL_STREAM = new NullOutputStream();
+    private static final byte[] NEW_LINE = {'\n', 0};
     
     public RapidPrinter() {
         super(NULL_STREAM, false);
@@ -36,6 +37,14 @@ public class RapidPrinter extends PrintStream {
     public void write(int by) {
         try {
             outs.write(by);
+        } catch(IOException ioe) {
+            exception = ioe;
+        }
+    }
+    
+    public void write(byte[] arr) {
+        try {
+            outs.write(arr);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -85,8 +94,8 @@ public class RapidPrinter extends PrintStream {
         try {
             for(int i = 0; i < len; i++) {
                 int c = str.charAt(i);
-                outs.write(c & 0xFF);
-                outs.write(c >>> 8 & 0xFF);
+                outs.write(c);
+                outs.write(c >> 8);
             }
         } catch(IOException ioe) {
             exception = ioe;
@@ -100,8 +109,8 @@ public class RapidPrinter extends PrintStream {
         try {
             for(int i = 0; i < len; i++) {
                 int c = arr[i];
-                outs.write(c & 0xFF);
-                outs.write(c >>> 8 & 0xFF);
+                outs.write(c);
+                outs.write(c >> 8);
             }
         } catch(IOException ioe) {
             exception = ioe;
@@ -110,8 +119,8 @@ public class RapidPrinter extends PrintStream {
     
     public void print(char chr) {
         try {
-            outs.write(chr & 0xFF);
-            outs.write(chr >>> 8 & 0xFF);
+            outs.write(chr);
+            outs.write(chr >> 8);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -139,8 +148,7 @@ public class RapidPrinter extends PrintStream {
     
     public void println() {
         try {
-            outs.write('\n');
-            outs.write(0);
+            outs.write(NEW_LINE, 0, 2);
         } catch(IOException ioe) {
             exception = ioe;
         }

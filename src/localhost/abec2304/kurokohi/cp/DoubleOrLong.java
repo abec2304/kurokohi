@@ -9,8 +9,8 @@ public abstract class DoubleOrLong extends ConstantPoolInfo {
     public long lowBytes;
     
     public void init(DataInputStream dis) throws IOException {
-        highBytes = dis.readInt() & 0xFFFFFFFFl;
-        lowBytes = dis.readInt() & 0xFFFFFFFFl;
+        highBytes = dis.readInt() & 0xFFFFFFFFL;
+        lowBytes = dis.readInt() & 0xFFFFFFFFL;
     }
     
 }

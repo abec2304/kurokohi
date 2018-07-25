@@ -2,6 +2,7 @@ package localhost.abec2304.kurokohi.cp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import localhost.abec2304.kurokohi.Info;
 
 public abstract class ConstantPoolInfo implements Info, Cloneable {
@@ -53,8 +54,11 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
             return null;
         }
         
-        if(info != null)
-            return (ConstantPoolInfo)info.clone();
+        if(info != null) {
+            info = (ConstantPoolInfo)info.clone();
+            info.tag = tag;
+            return info;
+        }
         
         return null;
     }
@@ -70,7 +74,6 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
             
             try {
                 instances[i] = (ConstantPoolInfo)Class.forName(prefix + NAMES[i]).newInstance();
-                instances[i].tag = i;
             } catch(ClassNotFoundException cnfe) {
                 cnfe.printStackTrace();
             } catch(IllegalAccessException iae) {
@@ -91,8 +94,8 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
         }
     }
     
-    public String toString() {
-        return "-";
+    public void print(PrintStream out) {
+        out.print('-');
     }
     
 }

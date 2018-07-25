@@ -2,6 +2,7 @@ package localhost.abec2304.kurokohi.cp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UTFDataFormatException;
 import localhost.abec2304.kurokohi.util.CharBuffer;
 
@@ -17,36 +18,48 @@ public class ConstUtf8 extends ConstantPoolInfo {
         dis.readFully(bytes);
     }
  
-    public String toString() {
-        if(string == null)
-            return "null";
+    public void print(PrintStream out) {
+        if(string == null) {
+            out.print("null");
+            return;
+        }
         
-        int len = string.length();
-        char[] arr = new char[len + 2];
-        arr[0] = '\'';
-        arr[len + 1] = '\'';
-        string.getChars(0, len, arr, 1);
-        return new String(arr);
+        out.print('\'');
+        out.print(string);
+        out.print('\'');
     }
 
     public void initString(CharBuffer buffer) throws UTFDataFormatException {
+        if(length == 0) {
+            string = "";
+            return;
+        }
+        
         buffer.reset(length);
         
         int c, b, a;
         int i = 0;
         
+        do {
+            c = bytes[i] & 0xFF;
+            if(c > 127)
+                break;
+            i++;
+            buffer.append((char)c);
+        } while(i < length);
+        
         while(i < length) {
             c = bytes[i] & 0xFF;
             
-            if(c >> 7 == 0) {
-                i++;
-                buffer.append((char)c);
-                continue;
-            }
-            
-            switch(c >> 4) {
-                case 12:
-                case 13:
+            switch(c >> 5) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    i++;
+                    buffer.append((char)c);
+                    continue;
+                case 6:
                     i += 2;
                     if(i > length)
                         throw new UTFDataFormatException("1");
@@ -54,8 +67,11 @@ public class ConstUtf8 extends ConstantPoolInfo {
                     if((b & 0xC0) != 0x80)
                         throw new UTFDataFormatException("2");
                     buffer.append((char)(((c & 0x1F) << 6) | (b & 0x3F)));
-                    break;
-                case 14:
+                    continue;
+                case 7:
+                    if(c >= 240)
+                        break;
+                    
                     i += 3;
                     if(i > length)
                         throw new UTFDataFormatException("3");
@@ -64,10 +80,10 @@ public class ConstUtf8 extends ConstantPoolInfo {
                     if(((b & 0xC0) != 0x80) || ((a & 0xC0) != 0x80))
                         throw new UTFDataFormatException("4");
                     buffer.append((char)(((c & 0x0F) << 12) | ((b & 0x3F) << 6) | (a & 0x3F)));
-                    break;
-                default:
-                    throw new UTFDataFormatException("5");
+                    continue;
             }
+            
+            throw new UTFDataFormatException("5");
         }
         
         string = buffer.toString();

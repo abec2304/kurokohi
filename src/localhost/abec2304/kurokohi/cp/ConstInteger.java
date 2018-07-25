@@ -1,9 +1,11 @@
 package localhost.abec2304.kurokohi.cp;
 
+import java.io.PrintStream;
+
 public class ConstInteger extends IntegerOrFloat {
     
-    public String toString() {
-        return (int)bytes + "";
+    public void print(PrintStream out) {
+        out.print((int)bytes);
     }
     
 }

@@ -26,9 +26,9 @@ public class ClassFile {
     public AttributeInfo[] attributes;
     
     public void init(DataInputStream dis) throws IOException {
-        CharBuffer buffer = new CharBuffer();
+        CharBuffer charBuffer = new CharBuffer();
         
-        magic = dis.readInt() & 0xFFFFFFFFl;
+        magic = dis.readInt() & 0xFFFFFFFFL;
         minorVersion = dis.readUnsignedShort();
         majorVersion = dis.readUnsignedShort();
         constantPoolCount = dis.readUnsignedShort();
@@ -45,7 +45,7 @@ public class ClassFile {
             
             if(info instanceof ConstUtf8) {
                 try {
-                    ((ConstUtf8)info).initString(buffer);
+                    ((ConstUtf8)info).initString(charBuffer);
                 } catch(IOException ioe) {
                     ioe.printStackTrace();
                 }

@@ -16,7 +16,11 @@ public class AttrUnknown extends AttributeInfo {
         attributeNameIndex = dis.readUnsignedShort();
         attributeLength = dis.readInt() & 0xFFFFFFFFL;
         
+        if(attributeLength == 0)
+            return;
+        
         long toRead = attributeLength;
+        
         Vector vector = new Vector();
         for(;;) {
             byte[] chunk = new byte[(int)Math.min(CHUNK_SIZE, toRead)];

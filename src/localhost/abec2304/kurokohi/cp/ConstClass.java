@@ -2,6 +2,7 @@ package localhost.abec2304.kurokohi.cp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class ConstClass extends ConstantPoolInfo {
     
@@ -11,8 +12,9 @@ public class ConstClass extends ConstantPoolInfo {
         nameIndex = dis.readUnsignedShort();
     }
     
-    public String toString() {
-        return "#".concat(Integer.toString(nameIndex, 10));
+    public void print(PrintStream out) {
+        out.print('#');
+        out.print(nameIndex);
     }
     
 }

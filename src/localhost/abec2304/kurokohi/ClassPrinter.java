@@ -65,6 +65,12 @@ public class ClassPrinter {
         classPrinter.print();
     }
     
+    public static void print(String className, ClassFile cf, PrintStream out) throws IOException {
+        ClassPrinter classPrinter = new ClassPrinter();
+        classPrinter.init(className, cf, out);
+        classPrinter.print();
+    }
+    
     public void print() {
         out.print("class ");
         out.println(className);
@@ -81,12 +87,12 @@ public class ClassPrinter {
         out.print("  super class: #");
         out.println(cf.superClass);
         
-        String interfaces = "  interfaces:";
+        out.print("  interfaces:");
         for(int i = 0; i < cf.interfaces.length; i++) {
-            String next = " #".concat(Integer.toString(cf.interfaces[i], 10));
-            interfaces = interfaces.concat(next);
+            out.print(" #");
+            out.print(cf.interfaces[i]);
         }
-        out.println(interfaces);
+        out.println();
         
         out.println("Constant pool:");
         for(int i = 0; i < cf.constantPool.length; i++) {
@@ -104,20 +110,20 @@ public class ClassPrinter {
             String index = Integer.toString(i, 10);
             int indexPad = 7 - index.length();
             printPadding(indexPad);
-            out.print("#");
+            out.print('#');
             out.print(index);
             out.print(" = ");
             out.print(type);
             
             if(constant != null) {
                 printPadding(19 - type.length());
-                out.print(constant.toString());
+                constant.print(out);
             }
             
             out.println();
         }
         
-        out.println("{");
+        out.println('{');
         out.println();
         
         out.print("fields: ");
@@ -128,7 +134,7 @@ public class ClassPrinter {
         out.println(cf.methodsCount);
         printMemberArray(cf.methods);
         
-        out.println("}");
+        out.println('}');
         
         printAttributes(cf.attributes, "");
         
@@ -164,31 +170,47 @@ public class ClassPrinter {
         for(int j = 0; j < attributes.length; j++) {
             AttributeInfo attribute = attributes[j];
             String attributeName = getUtf8(cf.constantPool, attribute.attributeNameIndex);
-            out.println(padding + attributeName + ":");
+            out.print(padding);
+            out.print('#');
+            out.print(attribute.attributeNameIndex);
+            out.print(':');
+            out.print(" //");
+            out.println(attributeName);
             if(isMethod && attribute instanceof AttrUnknown) {
                 if("Code".equals(attributeName)) {
                     try {
                         dumpCode((AttrUnknown)attribute, codeWalker);
                     } catch(IOException ioe) {
                         ioe.printStackTrace();
+                    } catch(ArrayIndexOutOfBoundsException aioobe) {
+                        aioobe.printStackTrace();
                     }
                     continue;
                 }
             }
-            out.println(padding + "  NYI");
+            out.print(padding);
+            out.println("  NYI");
         }
     }
     
     public void dumpCode(AttrUnknown attribute, CodeWalker codeWalker) throws IOException {
         LazyAttrCode code = new LazyAttrCode();
-        code.init(attribute, pre1_0);
+        code.pre1_0 = pre1_0;
+        code.init(attribute);
         
-        out.println("      stack=" + code.maxStack + ", locals=" + code.maxLocals + ", len=" + code.codeLength);
+        out.print("      stack=");
+        out.print(code.maxStack);
+        out.print(", locals=");
+        out.print(code.maxLocals);
+        out.print(", len=");
+        out.println(code.codeLength);
         
         codeWalker.init(code.code);
-        walk: for(;;) {
-            int initial = codeWalker.pos();
-            if(codeWalker.stepOver()) {
+        for(;;) {
+            int initial = codeWalker.pos;
+            
+            int action = codeWalker.stepOver();
+            if(action == codeWalker.DO_STEP) {
                 String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
                 String index = Integer.toString(initial, 10);
                 printPadding(10 - index.length());
@@ -198,35 +220,31 @@ public class ClassPrinter {
                 out.print(" //0x");
                 out.println(Integer.toString(codeWalker.opcode, 16));
                 continue;
+            } else if(action < codeWalker.DO_STEP) { // END
+                break;
             }
-            
-            if(codeWalker.operandsPos < 0) // END
-                break walk;
             
             String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
             String index = Integer.toString(initial, 10);
-            int indexPad = 10 - index.length();
-            printPadding(indexPad);
+            printPadding(10 - index.length());
             out.print(index);
             out.print(": ");
             out.print(name);
             printPadding(15 - name.length());
             
             for(;;) {
-                int nextStep = codeWalker.nextStep();
-                if(nextStep == codeWalker.NEXT_STEP) {
+                action = codeWalker.nextStep();
+                if(action > codeWalker.DO_STEP) { // NEXT_STEP
                     out.print(' ');
                     out.print(codeWalker.operandValues[codeWalker.operandsPos - 1]);
                     continue;
-                } else if(nextStep == codeWalker.COMPLEX_STEP) {
+                } else if(action < codeWalker.DO_STEP) { // COMPLEX_STEP
                     printComplex(codeWalker.multiStep());
                     if(codeWalker.operandsPos == codeWalker.operands.length) {
                         out.println();
                         break;
                     }
                     continue;
-                } else if(nextStep == codeWalker.END) {
-                    break walk;
                 }
 
                 out.print(' ');
@@ -239,27 +257,38 @@ public class ClassPrinter {
         int exceptionTableLength = code.exceptionTableLength;
         
         if(exceptionTableLength > 0) {
-            out.println("      Exception table:");
-            out.println("         from,to,target,type");
-        }
-        
-        for(int k = 0; k < exceptionTableLength; k++) {
-            int startPc = code.exceptionTable[k][0];
-            int endPc = code.exceptionTable[k][1];
-            int handlerPc = code.exceptionTable[k][2];
-            int catchType = code.exceptionTable[k][3];
-            out.println("         " + startPc + "," + endPc + "," + handlerPc + "," + catchType);
+            printExceptionTable(code.exceptionTable, exceptionTableLength);
         }
         
         printAttributes(code.attributes, "      ");
     }
 
+    public void printExceptionTable(int[][] table, int len) {
+        out.println("      Exception table:");
+        out.println("         from,to,target,type");
+        
+        for(int i = 0; i < len; i++) {
+            out.print("         ");
+            out.print(table[i][0]);
+            out.print(',');
+            out.print(table[i][1]);
+            out.print(',');
+            out.print(table[i][2]);
+            out.print(',');
+            out.println(table[i][3]);
+        }
+    }
+    
     public void printComplex(Object o) {
         if(o instanceof int[][]) {
             int[][] pairs = (int[][])o;
         
             for(int i = 0; i < pairs.length; i++) {
-                out.print(" [" + pairs[i][0] + ":" + pairs[i][1] + "]");
+                out.print(" [");
+                out.print(pairs[i][0]);
+                out.print(':');
+                out.print(pairs[i][1]);
+                out.print(']');
             }
         } else if(o instanceof int[]) {
             int[] array = (int[])o;

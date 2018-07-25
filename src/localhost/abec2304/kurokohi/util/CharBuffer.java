@@ -3,7 +3,7 @@ package localhost.abec2304.kurokohi.util;
 public class CharBuffer {
 
     private int count;
-    private char[] arr = new char[80];
+    private char[] arr = new char[160];
     
     public void append(char c) {
         arr[count++] = c;

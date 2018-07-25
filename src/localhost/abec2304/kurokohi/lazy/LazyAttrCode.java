@@ -19,7 +19,9 @@ public class LazyAttrCode extends AttributeInfo {
     public int attributesCount;
     public AttributeInfo[] attributes;
 
-    public void init(AttrUnknown base, boolean pre1_0) throws IOException {
+    public boolean pre1_0;
+    
+    public void init(AttrUnknown base) throws IOException {
         if(base.info == null)
             throw new IOException("uninitialized attribute");
         
@@ -33,7 +35,7 @@ public class LazyAttrCode extends AttributeInfo {
         } else {
             maxStack = dis.readUnsignedShort();
             maxLocals = dis.readUnsignedShort();
-            codeLength = dis.readInt() & 0xFFFFFFFFl;
+            codeLength = dis.readInt() & 0xFFFFFFFFL;
         }
         
         if(codeLength <= 0 || codeLength >= 65536)
