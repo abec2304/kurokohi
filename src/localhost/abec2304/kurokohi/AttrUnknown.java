@@ -1,14 +1,11 @@
 package localhost.abec2304.kurokohi;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.Vector;
 
 public class AttrUnknown extends AttributeInfo {
 
-    public Vector info;
+    public byte[][] info;
     
     private static final int CHUNK_SIZE = Integer.MAX_VALUE / 32;
     
@@ -21,18 +18,16 @@ public class AttrUnknown extends AttributeInfo {
         
         long toRead = attributeLength;
         
-        Vector vector = new Vector();
-        for(;;) {
-            byte[] chunk = new byte[(int)Math.min(CHUNK_SIZE, toRead)];
+        byte[][] pool = new byte[(int)((toRead + (CHUNK_SIZE - 1)) / CHUNK_SIZE)][];
+        int i = 0;
+        do {
+            byte[] chunk = new byte[(int)(toRead & CHUNK_SIZE)];
             dis.readFully(chunk);
             toRead -= chunk.length;
-            vector.addElement(new ByteArrayInputStream(chunk));
-            
-            if(toRead == 0)
-                break;
-        }
+            pool[i++] = chunk;
+        } while(toRead != 0);
         
-        info = vector;
+        info = pool;
     }
     
 }

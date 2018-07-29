@@ -1,12 +1,11 @@
 package localhost.abec2304.kurokohi.lazy;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
 import localhost.abec2304.kurokohi.AttributeInfo;
 import localhost.abec2304.kurokohi.AttrUnknown;
+import localhost.abec2304.kurokohi.util.MultiByteArrayInputStream;
 
 public class LazyAttrCode extends AttributeInfo {
 
@@ -23,9 +22,9 @@ public class LazyAttrCode extends AttributeInfo {
     
     public void init(AttrUnknown base) throws IOException {
         if(base.info == null)
-            throw new IOException("uninitialized attribute");
+            base.info = new byte[0][];
         
-        InputStream sis = new BufferedInputStream(new SequenceInputStream(base.info.elements()));
+        InputStream sis = new MultiByteArrayInputStream(base.info);
         DataInputStream dis = new DataInputStream(sis);
         
         if(pre1_0) {

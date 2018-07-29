@@ -17,7 +17,7 @@ public class ConstUtf8 extends ConstantPoolInfo {
         bytes = new byte[length];
         dis.readFully(bytes);
     }
- 
+
     public void print(PrintStream out) {
         if(string == null) {
             out.print("null");

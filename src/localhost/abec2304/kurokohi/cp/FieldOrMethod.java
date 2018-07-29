@@ -17,7 +17,7 @@ public abstract class FieldOrMethod extends ConstantPoolInfo {
     public void print(PrintStream out) {
         out.print('#');
         out.print(classIndex);
-        out.print('.');
+        out.print(".#");
         out.print(nameAndTypeIndex);
     }
     

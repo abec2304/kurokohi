@@ -13,6 +13,7 @@ public class RapidPrinter extends PrintStream {
     public IOException exception;
     
     private static final OutputStream NULL_STREAM = new NullOutputStream();
+    
     private static final byte[] NEW_LINE = {'\n', 0};
     
     public RapidPrinter() {
