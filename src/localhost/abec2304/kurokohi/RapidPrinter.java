@@ -14,7 +14,43 @@ public class RapidPrinter extends PrintStream {
     
     private static final OutputStream NULL_STREAM = new NullOutputStream();
     
+    private static final byte[] MARKER = {-1, -2};
     private static final byte[] NEW_LINE = {'\n', 0};
+    private static final byte[] MINUS = {'-', 0};
+    private static final byte[][] DIGITS = {
+        {'0', 0}, {'1', 0}, {'2', 0}, {'3', 0}, {'4', 0},
+        {'5', 0}, {'6', 0}, {'7', 0}, {'8', 0}, {'9', 0},
+        {'1', 0, '0', 0}, {'1', 0, '1', 0}, {'1', 0, '2', 0},
+        {'1', 0, '3', 0}, {'1', 0, '4', 0}, {'1', 0, '5', 0},
+        {'1', 0, '6', 0}, {'1', 0, '7', 0}, {'1', 0, '8', 0},
+        {'1', 0, '9', 0}, {'2', 0, '0', 0}, {'2', 0, '1', 0},
+        {'2', 0, '2', 0}, {'2', 0, '3', 0}, {'2', 0, '4', 0},
+        {'2', 0, '5', 0}, {'2', 0, '6', 0}, {'2', 0, '7', 0},
+        {'2', 0, '8', 0}, {'2', 0, '9', 0}, {'3', 0, '0', 0},
+        {'3', 0, '1', 0}, {'3', 0, '2', 0}, {'3', 0, '3', 0},
+        {'3', 0, '4', 0}, {'3', 0, '5', 0}, {'3', 0, '6', 0},
+        {'3', 0, '7', 0}, {'3', 0, '8', 0}, {'3', 0, '9', 0},
+        {'4', 0, '0', 0}, {'4', 0, '1', 0}, {'4', 0, '2', 0},
+        {'4', 0, '3', 0}, {'4', 0, '4', 0}, {'4', 0, '5', 0},
+        {'4', 0, '6', 0}, {'4', 0, '7', 0}, {'4', 0, '8', 0},
+        {'4', 0, '9', 0}, {'5', 0, '0', 0}, {'5', 0, '1', 0},
+        {'5', 0, '2', 0}, {'5', 0, '3', 0}, {'5', 0, '4', 0},
+        {'5', 0, '5', 0}, {'5', 0, '6', 0}, {'5', 0, '7', 0},
+        {'5', 0, '8', 0}, {'5', 0, '9', 0}, {'6', 0, '0', 0},
+        {'6', 0, '1', 0}, {'6', 0, '2', 0}, {'6', 0, '3', 0},
+        {'6', 0, '4', 0}, {'6', 0, '5', 0}, {'6', 0, '6', 0},
+        {'6', 0, '7', 0}, {'6', 0, '8', 0}, {'6', 0, '9', 0},
+        {'7', 0, '0', 0}, {'7', 0, '1', 0}, {'7', 0, '2', 0},
+        {'7', 0, '3', 0}, {'7', 0, '4', 0}, {'7', 0, '5', 0},
+        {'7', 0, '6', 0}, {'7', 0, '7', 0}, {'7', 0, '8', 0},
+        {'7', 0, '9', 0}, {'8', 0, '0', 0}, {'8', 0, '1', 0},
+        {'8', 0, '2', 0}, {'8', 0, '3', 0}, {'8', 0, '4', 0},
+        {'8', 0, '5', 0}, {'8', 0, '6', 0}, {'8', 0, '7', 0},
+        {'8', 0, '8', 0}, {'8', 0, '9', 0}, {'9', 0, '0', 0},
+        {'9', 0, '1', 0}, {'9', 0, '2', 0}, {'9', 0, '3', 0},
+        {'9', 0, '4', 0}, {'9', 0, '5', 0}, {'9', 0, '6', 0},
+        {'9', 0, '7', 0}, {'9', 0, '8', 0}, {'9', 0, '9', 0}
+    };
     
     public RapidPrinter() {
         super(NULL_STREAM, false);
@@ -28,8 +64,7 @@ public class RapidPrinter extends PrintStream {
     
     public void printMarker() {
         try {
-            outs.write(0xFF);
-            outs.write(0xFE);
+            outs.write(MARKER);
         } catch(IOException ioe) {
             exception = ioe;
         }
@@ -90,6 +125,9 @@ public class RapidPrinter extends PrintStream {
     
     public void print(String str) {
         OutputStream outs = this.outs;
+        
+        if(str == null)
+            str = "null";
         int len = str.length();
         
         try {
@@ -128,7 +166,40 @@ public class RapidPrinter extends PrintStream {
     }
     
     public void print(int num) {
-        print(Integer.toString(num, 10));
+        try {
+            if(num < 0) {
+                outs.write(MINUS);
+                if(num == Integer.MIN_VALUE) {
+                    print("2147483648");
+                    return;
+                }
+                num *= -1;
+            }
+            
+            if(num < 100) {
+                outs.write(DIGITS[num]);
+            } else if(num < 10000) {
+                outs.write(DIGITS[num / 100]);
+                outs.write(DIGITS[num % 100]);
+            } else if(num < 1000000) {
+                outs.write(DIGITS[num / 10000]);
+                outs.write(DIGITS[num % 10000 / 100]);
+                outs.write(DIGITS[num % 100]);
+            } else if(num < 100000000) {
+                outs.write(DIGITS[num / 1000000]);
+                outs.write(DIGITS[num % 1000000 / 10000]);
+                outs.write(DIGITS[num / 100 % 100]);
+                outs.write(DIGITS[num % 100]);
+            } else {
+                outs.write(DIGITS[num / 100000000]);
+                outs.write(DIGITS[num % 100000000 / 1000000]);
+                outs.write(DIGITS[num % 1000000 / 10000]);
+                outs.write(DIGITS[num / 100 % 100]);
+                outs.write(DIGITS[num % 100]);
+            }
+        } catch(IOException ioe) {
+            exception = ioe;
+        }
     }
     
     public void print(long num) {

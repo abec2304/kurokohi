@@ -11,18 +11,17 @@ public class AttrUnknown extends AttributeInfo {
     
     public void init(DataInputStream dis) throws IOException {
         attributeNameIndex = dis.readUnsignedShort();
-        attributeLength = dis.readInt() & 0xFFFFFFFFL;
+        long toRead = attributeLength = dis.readInt() & 0xFFFFFFFFL;
         
-        if(attributeLength == 0)
+        if(toRead == 0)
             return;
-        
-        long toRead = attributeLength;
         
         byte[][] pool = new byte[(int)((toRead + (CHUNK_SIZE - 1)) / CHUNK_SIZE)][];
         int i = 0;
         do {
-            byte[] chunk = new byte[(int)(toRead & CHUNK_SIZE)];
-            dis.readFully(chunk);
+            int len = (int)(toRead & CHUNK_SIZE);
+            byte[] chunk = new byte[len];
+            dis.readFully(chunk, 0, len);
             toRead -= chunk.length;
             pool[i++] = chunk;
         } while(toRead != 0);

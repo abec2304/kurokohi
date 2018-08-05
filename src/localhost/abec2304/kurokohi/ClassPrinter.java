@@ -1,8 +1,11 @@
 package localhost.abec2304.kurokohi;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,7 +49,9 @@ public class ClassPrinter {
     public static void main(String[] args) throws IOException {
         FileInputStream fis = new FileInputStream(args[0]);
         BufferedInputStream bis = new BufferedInputStream(fis);
-        print(args[0], bis, System.out);
+        OutputStream out = new FileOutputStream(FileDescriptor.out);
+        PrintStream ps = new PrintStream(new BufferedOutputStream(out), false);
+        print(args[0], bis, ps);
     }
     
     public static void printEncoded(String className, InputStream is, OutputStream out) throws IOException {
@@ -107,11 +112,10 @@ public class ClassPrinter {
             if(type == null)
                 type = "???";
             
-            String index = Integer.toString(i, 10);
-            int indexPad = 7 - index.length();
+            int indexPad = 7 - numCharsForIndex(i);
             printPadding(indexPad);
             out.print('#');
-            out.print(index);
+            out.print(i);
             out.print(" = ");
             out.print(type);
             
@@ -193,6 +197,10 @@ public class ClassPrinter {
         }
     }
     
+    public static int numCharsForIndex(int n) {
+        return n < 10 ? 1 : n < 100 ? 2 : n < 1000 ? 3 : 4;
+    }
+    
     public void dumpCode(AttrUnknown attribute, CodeWalker codeWalker) throws IOException {
         LazyAttrCode code = new LazyAttrCode();
         code.pre1_0 = pre1_0;
@@ -212,9 +220,8 @@ public class ClassPrinter {
             int action = codeWalker.stepOver();
             if(action == codeWalker.DO_STEP) {
                 String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
-                String index = Integer.toString(initial, 10);
-                printPadding(10 - index.length());
-                out.print(index);
+                printPadding(10 - numCharsForIndex(initial));
+                out.print(initial);
                 out.print(": ");
                 out.print(name == null ? "null" : name);
                 out.print(" //0x");
@@ -225,9 +232,8 @@ public class ClassPrinter {
             }
             
             String name = Opcode.OPCODE_NAMES[codeWalker.opcode];
-            String index = Integer.toString(initial, 10);
-            printPadding(10 - index.length());
-            out.print(index);
+            printPadding(10 - numCharsForIndex(initial));
+            out.print(initial);
             out.print(": ");
             out.print(name);
             printPadding(15 - name.length());

@@ -20,4 +20,10 @@ public class CharBuffer {
         return new String(arr, 0, count);
     }
     
+    public char[] toArray() {
+        char[] arr = new char[count];
+        System.arraycopy(this.arr, 0, arr, 0, count);
+        return arr;
+    }
+    
 }

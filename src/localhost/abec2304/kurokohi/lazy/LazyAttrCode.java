@@ -24,6 +24,9 @@ public class LazyAttrCode extends AttributeInfo {
         if(base.info == null)
             base.info = new byte[0][];
         
+        this.attributeNameIndex = base.attributeNameIndex;
+        this.attributeLength = base.attributeLength;
+        
         InputStream sis = new MultiByteArrayInputStream(base.info);
         DataInputStream dis = new DataInputStream(sis);
         
@@ -37,25 +40,20 @@ public class LazyAttrCode extends AttributeInfo {
             codeLength = dis.readInt() & 0xFFFFFFFFL;
         }
         
-        if(codeLength <= 0 || codeLength >= 65536)
+        if(codeLength == 0 || codeLength >= 65536)
             throw new IOException("codeLength: 0 < " + codeLength + " < 65536 = false");
         
-        this.attributeNameIndex = base.attributeNameIndex;
-        this.attributeLength = base.attributeLength;
-        
-        this.code = new byte[(int)codeLength];
-        dis.readFully(code);
+        int len = (int)codeLength;
+        this.code = new byte[len];
+        dis.readFully(code, 0, len);
         
         exceptionTableLength = dis.readUnsignedShort();
-        exceptionTable = new int[exceptionTableLength][];
+        exceptionTable = new int[exceptionTableLength][4];
         for(int i = 0; i < exceptionTableLength; i++) {
-            int[] exc = {
-                dis.readUnsignedShort(),
-                dis.readUnsignedShort(),
-                dis.readUnsignedShort(),
-                dis.readUnsignedShort()
-            };
-            exceptionTable[i] = exc;
+            exceptionTable[i][0] = dis.readUnsignedShort();
+            exceptionTable[i][1] = dis.readUnsignedShort();
+            exceptionTable[i][2] = dis.readUnsignedShort();
+            exceptionTable[i][3] = dis.readUnsignedShort();
         }
         
         attributesCount = dis.readUnsignedShort();
