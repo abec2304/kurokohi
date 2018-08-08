@@ -180,22 +180,32 @@ public class RapidPrinter extends PrintStream {
                 outs.write(DIGITS[num]);
             } else if(num < 10000) {
                 outs.write(DIGITS[num / 100]);
-                outs.write(DIGITS[num % 100]);
+                outs.write(DIGITS[num % 100 / 10]);
+                outs.write(DIGITS[num % 10]);
             } else if(num < 1000000) {
                 outs.write(DIGITS[num / 10000]);
-                outs.write(DIGITS[num % 10000 / 100]);
-                outs.write(DIGITS[num % 100]);
+                outs.write(DIGITS[num % 10000 / 100 / 10]);
+                outs.write(DIGITS[num % 10000 / 100 % 10]);
+                outs.write(DIGITS[num % 100 / 10]);
+                outs.write(DIGITS[num % 10]);
             } else if(num < 100000000) {
                 outs.write(DIGITS[num / 1000000]);
-                outs.write(DIGITS[num % 1000000 / 10000]);
-                outs.write(DIGITS[num / 100 % 100]);
-                outs.write(DIGITS[num % 100]);
+                outs.write(DIGITS[num % 1000000 / 10000 / 10]);
+                outs.write(DIGITS[num % 1000000 / 10000 % 10]);
+                outs.write(DIGITS[num / 100 % 100 / 10]);
+                outs.write(DIGITS[num / 100 % 100 % 10]);
+                outs.write(DIGITS[num % 100 / 10]);
+                outs.write(DIGITS[num % 10]);
             } else {
                 outs.write(DIGITS[num / 100000000]);
-                outs.write(DIGITS[num % 100000000 / 1000000]);
-                outs.write(DIGITS[num % 1000000 / 10000]);
-                outs.write(DIGITS[num / 100 % 100]);
-                outs.write(DIGITS[num % 100]);
+                outs.write(DIGITS[num % 100000000 / 1000000 / 10]);
+                outs.write(DIGITS[num % 100000000 / 1000000 % 10]);
+                outs.write(DIGITS[num % 1000000 / 10000 / 10]);
+                outs.write(DIGITS[num % 1000000 / 10000 % 10]);
+                outs.write(DIGITS[num / 100 % 100 / 10]);
+                outs.write(DIGITS[num / 100 % 100 % 10]);
+                outs.write(DIGITS[num % 100 / 10]);
+                outs.write(DIGITS[num % 10]);
             }
         } catch(IOException ioe) {
             exception = ioe;

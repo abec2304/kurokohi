@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import localhost.abec2304.kurokohi.cp.ConstantPoolInfo;
 import localhost.abec2304.kurokohi.cp.ConstUtf8;
+import localhost.abec2304.kurokohi.cp.DoubleOrLong;
 import localhost.abec2304.kurokohi.util.CharBuffer;
 
 public class ClassFile {
@@ -33,7 +34,9 @@ public class ClassFile {
         majorVersion = dis.readUnsignedShort();
         constantPoolCount = dis.readUnsignedShort();
         constantPool = new ConstantPoolInfo[constantPoolCount];
-        for(int i = 1; i < constantPoolCount; i++) {
+        
+        int n = 1;
+        while(n < constantPoolCount) {
             int tag = dis.readUnsignedByte();  
             
             ConstantPoolInfo info = ConstantPoolInfo.getConstant(tag);
@@ -42,6 +45,7 @@ public class ClassFile {
                 throw new IOException("truncated constant pool");
             
             info.init(dis);
+            constantPool[n] = info;
             
             if(info instanceof ConstUtf8) {
                 try {
@@ -49,13 +53,14 @@ public class ClassFile {
                 } catch(IOException ioe) {
                     ioe.printStackTrace();
                 }
+            } else if(info instanceof DoubleOrLong) {
+                n += 2;
+                continue;
             }
             
-            constantPool[i] = info;
-            
-            if(tag == 5 || tag == 6)
-                i++;
+            n += 1;
         }
+        
         accessFlags = dis.readUnsignedShort();
         thisClass = dis.readUnsignedShort();
         superClass = dis.readUnsignedShort();
