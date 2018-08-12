@@ -92,4 +92,12 @@ public class ClassFile {
         }
     }
     
+    public String getUtf8(int i) {
+        ConstantPoolInfo cpi;
+        if(i > constantPool.length || !((cpi = constantPool[i]) instanceof ConstUtf8))
+            return "???";
+        
+        return ((ConstUtf8)cpi).string;
+    }
+    
 }

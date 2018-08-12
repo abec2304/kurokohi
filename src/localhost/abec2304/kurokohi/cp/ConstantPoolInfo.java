@@ -94,8 +94,6 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
         }
     }
     
-    public void print(PrintStream out) {
-        out.print('-');
-    }
+    public abstract void print(PrintStream out);
     
 }

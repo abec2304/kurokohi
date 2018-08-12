@@ -21,11 +21,8 @@ public class LazyAttrCode extends AttributeInfo {
     public boolean pre1_0;
     
     public void init(AttrUnknown base) throws IOException {
-        if(base.info == null)
-            base.info = new byte[0][];
-        
-        this.attributeNameIndex = base.attributeNameIndex;
-        this.attributeLength = base.attributeLength;
+        attributeNameIndex = base.attributeNameIndex;
+        attributeLength = base.attributeLength;
         
         InputStream sis = new MultiByteArrayInputStream(base.info);
         DataInputStream dis = new DataInputStream(sis);
@@ -44,16 +41,17 @@ public class LazyAttrCode extends AttributeInfo {
             throw new IOException("codeLength: 0 < " + codeLength + " < 65536 = false");
         
         int len = (int)codeLength;
-        this.code = new byte[len];
+        code = new byte[len];
         dis.readFully(code, 0, len);
         
         exceptionTableLength = dis.readUnsignedShort();
         exceptionTable = new int[exceptionTableLength][4];
         for(int i = 0; i < exceptionTableLength; i++) {
-            exceptionTable[i][0] = dis.readUnsignedShort();
-            exceptionTable[i][1] = dis.readUnsignedShort();
-            exceptionTable[i][2] = dis.readUnsignedShort();
-            exceptionTable[i][3] = dis.readUnsignedShort();
+            int[] entry = exceptionTable[i];
+            entry[0] = dis.readUnsignedShort();
+            entry[1] = dis.readUnsignedShort();
+            entry[2] = dis.readUnsignedShort();
+            entry[3] = dis.readUnsignedShort();
         }
         
         attributesCount = dis.readUnsignedShort();
@@ -63,6 +61,10 @@ public class LazyAttrCode extends AttributeInfo {
             attribute.init(dis);
             attributes[i] = attribute;
         }
+    }
+    
+    public String getName() {
+        return "Code";
     }
     
 }

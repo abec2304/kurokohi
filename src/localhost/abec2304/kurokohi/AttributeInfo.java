@@ -12,4 +12,8 @@ public abstract class AttributeInfo implements Info {
         throw new IOException("nothing to read");
     }
     
+    public String getName() {
+        return null;
+    }
+    
 }

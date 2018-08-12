@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import localhost.abec2304.kurokohi.cp.ConstantPoolInfo;
 import localhost.abec2304.kurokohi.cp.ConstUtf8;
 import localhost.abec2304.kurokohi.lazy.LazyAttrCode;
+import localhost.abec2304.kurokohi.util.MultiByteArrayInputStream;
 
 public class ClassPrinter {
     
@@ -37,13 +38,6 @@ public class ClassPrinter {
         
         for(int i = 0; i < len; i++)
             out.print(' ');
-    }
-    
-    public static String getUtf8(ConstantPoolInfo[] cp, int i) {
-        if(i > cp.length || !(cp[i] instanceof ConstUtf8))
-            return "???";
-        
-        return ((ConstUtf8)cp[i]).string;
     }
     
     public static void main(String[] args) throws IOException {
@@ -132,24 +126,24 @@ public class ClassPrinter {
         
         out.print("fields: ");
         out.println(cf.fieldsCount);
-        printMemberArray(cf.fields);
+        printMemberArray(cf.fields, 1);
         out.println();
         out.print("methods: ");
         out.println(cf.methodsCount);
-        printMemberArray(cf.methods);
+        printMemberArray(cf.methods, 2);
         
         out.println('}');
         
-        printAttributes(cf.attributes, "");
+        printAttributes(cf.attributes, "", 3);
         
         out.flush();
     }
 
-    public void printMemberArray(MemberInfo[] members) {
+    public void printMemberArray(MemberInfo[] members, int type) {
         for(int i = 0; i < members.length; i++) {
             MemberInfo member = members[i];
-            String memberName = getUtf8(cf.constantPool, member.nameIndex);
-            String memberDesc = getUtf8(cf.constantPool, member.descriptorIndex);
+            String memberName = cf.getUtf8(member.nameIndex);
+            String memberDesc = cf.getUtf8(member.descriptorIndex);
             out.print("  #");
             out.print(member.nameIndex);
             out.print(" //");
@@ -160,28 +154,34 @@ public class ClassPrinter {
             out.println(memberDesc);
             out.print("    flags: 0x");
             out.println(Integer.toString(member.accessFlags, 16));
-            printAttributes(member.attributes, "    ", member);
+            printAttributes(member.attributes, "    ", type);
             out.println();
         }
     }
     
-    public void printAttributes(AttributeInfo[] attributes, String padding) {
-        printAttributes(attributes, padding, null);
-    }
-    
-    public void printAttributes(AttributeInfo[] attributes, String padding, Info info) {
-        boolean isMethod = info instanceof MethodInfo;
+    public void printAttributes(AttributeInfo[] attributes, String padding, int type) {
         for(int j = 0; j < attributes.length; j++) {
             AttributeInfo attribute = attributes[j];
-            String attributeName = getUtf8(cf.constantPool, attribute.attributeNameIndex);
+            String attributeName = cf.getUtf8(attribute.attributeNameIndex);
             out.print(padding);
             out.print('#');
             out.print(attribute.attributeNameIndex);
             out.print(':');
             out.print(" //");
             out.println(attributeName);
-            if(isMethod && attribute instanceof AttrUnknown) {
-                if("Code".equals(attributeName)) {
+            
+            if(attribute.attributeLength == 0) {
+                continue;
+            }
+            
+            if(attribute instanceof AttrUnknown) {
+                if(type > 0 && "Signature".equals(attributeName)) {
+                    printSimpleAttribute(padding, (AttrUnknown)attribute);
+                    continue;
+                } else if(type == 1 && "ConstantValue".equals(attributeName)) {
+                    printSimpleAttribute(padding, (AttrUnknown)attribute);
+                    continue;
+                } else if(type == 2 && "Code".equals(attributeName)) {
                     try {
                         dumpCode((AttrUnknown)attribute, codeWalker);
                     } catch(IOException ioe) {
@@ -190,11 +190,31 @@ public class ClassPrinter {
                         aioobe.printStackTrace();
                     }
                     continue;
+                } else if(type == 3 && "SourceFile".equals(attributeName)) {
+                    printSimpleAttribute(padding, (AttrUnknown)attribute);
+                    continue;
                 }
             }
+            
             out.print(padding);
             out.println("  NYI");
         }
+    }
+    
+    public void printSimpleAttribute(String padding, AttrUnknown attribute) {
+        InputStream is = new MultiByteArrayInputStream(attribute.info);
+        DataInputStream dis = new DataInputStream(is);
+        
+        int index;
+        try {
+            index = dis.readUnsignedShort();
+        } catch(IOException ioe) {
+            index = -1;
+        }
+        
+        out.print(padding);
+        out.print("  #");
+        out.println(index);
     }
     
     public static int numCharsForIndex(int n) {
@@ -254,8 +274,7 @@ public class ClassPrinter {
                 }
 
                 out.print(' ');
-                out.print(codeWalker.operandValues[codeWalker.operandsPos - 1]);
-                out.println();
+                out.println(codeWalker.operandValues[codeWalker.operandsPos - 1]);
                 break;
             }
         }
@@ -266,7 +285,7 @@ public class ClassPrinter {
             printExceptionTable(code.exceptionTable, exceptionTableLength);
         }
         
-        printAttributes(code.attributes, "      ");
+        printAttributes(code.attributes, "      ", 0);
     }
 
     public void printExceptionTable(int[][] table, int len) {
@@ -274,14 +293,15 @@ public class ClassPrinter {
         out.println("         from,to,target,type");
         
         for(int i = 0; i < len; i++) {
+            int[] entry = table[i];
             out.print("         ");
-            out.print(table[i][0]);
+            out.print(entry[0]);
             out.print(',');
-            out.print(table[i][1]);
+            out.print(entry[1]);
             out.print(',');
-            out.print(table[i][2]);
+            out.print(entry[2]);
             out.print(',');
-            out.println(table[i][3]);
+            out.println(entry[3]);
         }
     }
     
@@ -290,10 +310,11 @@ public class ClassPrinter {
             int[][] pairs = (int[][])o;
         
             for(int i = 0; i < pairs.length; i++) {
+                int[] pair = pairs[i];
                 out.print(" [");
-                out.print(pairs[i][0]);
+                out.print(pair[0]);
                 out.print(':');
-                out.print(pairs[i][1]);
+                out.print(pair[1]);
                 out.print(']');
             }
         } else if(o instanceof int[]) {

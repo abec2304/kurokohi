@@ -4,19 +4,17 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 
-public class ConstBytes extends ConstantPoolInfo {
+public abstract class ModuleOrPackage extends ConstantPoolInfo {
     
-    public int length;
-    public byte[] bytes;
+    public int nameIndex;
     
     public void init(DataInputStream dis) throws IOException {
-        length = dis.readUnsignedShort();
-        bytes = new byte[length];
-        dis.readFully(bytes);
+        nameIndex = dis.readUnsignedShort();
     }
-
+    
     public void print(PrintStream out) {
-        out.print("!!");
+        out.print('#');
+        out.print(nameIndex);
     }
     
 }

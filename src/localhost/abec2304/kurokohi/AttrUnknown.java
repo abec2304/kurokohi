@@ -7,7 +7,7 @@ public class AttrUnknown extends AttributeInfo {
 
     public byte[][] info;
     
-    private static final int CHUNK_SIZE = Integer.MAX_VALUE / 32;
+    private static final int CHUNK_SIZE = Integer.MAX_VALUE / 2;
     
     public void init(DataInputStream dis) throws IOException {
         attributeNameIndex = dis.readUnsignedShort();
@@ -19,10 +19,12 @@ public class AttrUnknown extends AttributeInfo {
         byte[][] pool = new byte[(int)((toRead + (CHUNK_SIZE - 1)) / CHUNK_SIZE)][];
         int i = 0;
         do {
-            int len = (int)(toRead & CHUNK_SIZE);
+            int len = toRead > CHUNK_SIZE ? CHUNK_SIZE : (int)toRead;
+            
             byte[] chunk = new byte[len];
             dis.readFully(chunk, 0, len);
-            toRead -= chunk.length;
+            toRead -= len;
+            
             pool[i++] = chunk;
         } while(toRead != 0);
         
