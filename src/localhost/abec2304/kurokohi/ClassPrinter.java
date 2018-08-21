@@ -21,7 +21,7 @@ public class ClassPrinter {
     public ClassFile cf;
     public PrintStream out;
     public boolean pre1_0;
-
+    
     private final CodeWalker codeWalker = new CodeWalker();
     
     public void init(String className, ClassFile cf, PrintStream out) {
@@ -125,11 +125,11 @@ public class ClassPrinter {
         out.println();
         
         out.print("fields: ");
-        out.println(cf.fieldsCount);
+        out.println(cf.fields.length);
         printMemberArray(cf.fields, 1);
         out.println();
         out.print("methods: ");
-        out.println(cf.methodsCount);
+        out.println(cf.methods.length);
         printMemberArray(cf.methods, 2);
         
         out.println('}');
@@ -138,7 +138,7 @@ public class ClassPrinter {
         
         out.flush();
     }
-
+    
     public void printMemberArray(MemberInfo[] members, int type) {
         for(int i = 0; i < members.length; i++) {
             MemberInfo member = members[i];
@@ -231,7 +231,7 @@ public class ClassPrinter {
         out.print(", locals=");
         out.print(code.maxLocals);
         out.print(", len=");
-        out.println(code.codeLength);
+        out.println(code.code.length);
         
         codeWalker.init(code.code);
         for(;;) {
@@ -243,7 +243,7 @@ public class ClassPrinter {
                 printPadding(10 - numCharsForIndex(initial));
                 out.print(initial);
                 out.print(": ");
-                out.print(name == null ? "null" : name);
+                out.print(name);
                 out.print(" //0x");
                 out.println(Integer.toString(codeWalker.opcode, 16));
                 continue;
@@ -279,7 +279,7 @@ public class ClassPrinter {
             }
         }
         
-        int exceptionTableLength = code.exceptionTableLength;
+        int exceptionTableLength = code.exceptionTable.length;
         
         if(exceptionTableLength > 0) {
             printExceptionTable(code.exceptionTable, exceptionTableLength);

@@ -23,7 +23,7 @@ public class CodeWalker {
         len = code.length;
         pos = 0;
     }
-
+    
     public int stepOver() {
         if(pos == len)
             return END;

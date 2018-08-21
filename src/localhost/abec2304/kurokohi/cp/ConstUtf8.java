@@ -1,7 +1,7 @@
 package localhost.abec2304.kurokohi.cp;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UTFDataFormatException;
@@ -9,16 +9,28 @@ import localhost.abec2304.kurokohi.util.CharBuffer;
 
 public class ConstUtf8 extends ConstantPoolInfo {
     
-    public int length;
+    public int tag() {
+        return 1;
+    }
+    
     public byte[] bytes;
     public String string;
     
     public void init(DataInputStream dis) throws IOException {
-        length = dis.readUnsignedShort();
-        bytes = new byte[length];
-        dis.readFully(bytes, 0, length);
+        bytes = new byte[dis.readUnsignedShort()];
+        dis.readFully(bytes);
     }
 
+    public void write(DataOutputStream dos) throws IOException {
+        writeTag(dos);
+        if(string != null) {
+            dos.writeUTF(string);
+        } else {
+            dos.writeShort(bytes.length);
+            dos.write(bytes);
+        }
+    }
+    
     public void print(PrintStream out) {
         if(string == null) {
             out.print("null");
@@ -31,6 +43,7 @@ public class ConstUtf8 extends ConstantPoolInfo {
     }
 
     public void initString(CharBuffer buffer) throws UTFDataFormatException {
+        int length = bytes.length;
         if(length == 0) {
             string = "";
             return;

@@ -1,6 +1,7 @@
 package localhost.abec2304.kurokohi.lazy;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import localhost.abec2304.kurokohi.AttributeInfo;
@@ -9,12 +10,9 @@ import localhost.abec2304.kurokohi.util.MultiByteArrayInputStream;
 
 public class LazyAttrStackMapTable extends AttributeInfo {
 
-    public int numberOfEntries;
     public int[] frames;
     public int[] deltas;
-    public int numberOfLocals;
     public int[][][] locals;
-    public int numberOfStackItems;
     public int[][][] stackItems;
     
     // same
@@ -56,7 +54,7 @@ public class LazyAttrStackMapTable extends AttributeInfo {
         InputStream sis = new MultiByteArrayInputStream(base.info);
         DataInputStream dis = new DataInputStream(sis);
         
-        numberOfEntries = dis.readUnsignedShort();
+        int numberOfEntries = dis.readUnsignedShort();
         
         frames = new int[numberOfEntries];
         deltas = new int[numberOfEntries + 1];
@@ -67,39 +65,47 @@ public class LazyAttrStackMapTable extends AttributeInfo {
         
         for(int i = 0; i < numberOfEntries; i++) {
             int frameType = dis.readUnsignedByte();
-            frames[i] = frameType;
+            
+            int numberOfStackItems = 0;
+            int numberOfLocals = 0;
             
             int offsetDelta;
             if(frameType >= SAME_MIN && frameType <= SAME_MAX) {
-                offsetDelta = frameType - SAME_MIN;
+                frames[i] = SAME_MIN;
+                offsetDelta = frameType;
             } else if(frameType >= SAME_LOCALS_1_STACK_MIN && frameType <= SAME_LOCALS_1_STACK_MAX) {
-                numberOfStackItems = 1;
+                frames[i] = SAME_LOCALS_1_STACK_MIN;
                 offsetDelta = frameType - SAME_LOCALS_1_STACK_MIN;
-            } else if(frameType == SAME_LOCALS_1_STACK_W) {
                 numberOfStackItems = 1;
-                offsetDelta = dis.readUnsignedShort();
-            } else if(frameType >= CHOP_MIN && frameType <= CHOP_MAX) {
-                offsetDelta = dis.readUnsignedShort();
-            } else if(frameType == SAME_W) {
-                offsetDelta = dis.readUnsignedShort();
             } else if(frameType >= APPEND_MIN && frameType <= APPEND_MAX) {
-                numberOfLocals = frameType - 251;
+                frames[i] = APPEND_MIN;
                 offsetDelta = dis.readUnsignedShort();
-            } else if(frameType == FULL_FRAME) {
-                offsetDelta = dis.readUnsignedShort();
-                numberOfLocals = dis.readUnsignedShort();
-                numberOfStackItems = -1;
+                numberOfLocals = frameType - (APPEND_MIN - 1);
             } else {
-                throw new IOException("invalid stackmap");
+                frames[i] = frameType;
+                if(frameType == SAME_LOCALS_1_STACK_W) {
+                    offsetDelta = dis.readUnsignedShort();
+                    numberOfStackItems = 1;
+                } else if(frameType >= CHOP_MIN && frameType <= CHOP_MAX) {
+                    offsetDelta = dis.readUnsignedShort();
+                } else if(frameType == SAME_W) {
+                    offsetDelta = dis.readUnsignedShort();
+                } else if(frameType == FULL_FRAME) {
+                    offsetDelta = dis.readUnsignedShort();
+                    numberOfLocals = dis.readUnsignedShort();
+                    numberOfStackItems = -1;
+                } else {
+                    throw new IOException("invalid stackmap");
+                }
             }
             
             locals[i] = new int[numberOfLocals][2];
             for(int j = 0; j < numberOfLocals; j++) {
                 int[] pair = locals[i][j];
                 int verificationType = dis.readByte();
+                pair[0] = verificationType;
                 if(verificationType == TYPE_OBJECT || verificationType == TYPE_UNINITIALIZED)
                     pair[1] = dis.readUnsignedShort();
-                pair[0] = verificationType;
             }
             
             if(numberOfStackItems == -1)
@@ -109,9 +115,9 @@ public class LazyAttrStackMapTable extends AttributeInfo {
             for(int j = 0; j < numberOfStackItems; j++) {
                 int[] pair = stackItems[i][j];
                 int verificationType = dis.readByte();
+                pair[0] = verificationType;
                 if(verificationType == TYPE_OBJECT || verificationType == TYPE_UNINITIALIZED)
                     pair[1] = dis.readUnsignedShort();
-                pair[0] = verificationType;
             }
             
             deltas[i] = offsetDelta;
@@ -119,6 +125,14 @@ public class LazyAttrStackMapTable extends AttributeInfo {
         }
         
         deltas[numberOfEntries] = offset;
+    }
+    
+    public void write(DataOutputStream dos) throws IOException {
+        throw new Error("NYI");
+    }
+    
+    public void recalculateLength() {
+        throw new Error("NYI");
     }
     
     public String getName() {

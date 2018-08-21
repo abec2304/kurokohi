@@ -1,6 +1,6 @@
 package localhost.abec2304.kurokohi.cp;
 
-import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import localhost.abec2304.kurokohi.Info;
@@ -30,19 +30,33 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
         /*19*/"Module",
         /*20*/"Package"
     };
-
+    
     // must be after NAMES
     private static final ConstantPoolInfo[] NEWMAPPING = getNewMapping();
     
     public int tag;
-
+    
+    public ConstantPoolInfo() {
+        tag = tag();
+    }
+    
+    public abstract int tag();
+    
+    public void writeTag(DataOutputStream dos) throws IOException {
+        dos.writeByte(tag);
+    }
+    
     public String getName() {
         return tag < NAMES.length && tag >= 0 ? NAMES[tag] : null;
     }
     
     public static void main(String[] args) {
         for(int i = 0; i < NEWMAPPING.length; i++) {
-            System.out.println(i + "[" + NEWMAPPING[i] + "]");
+            ConstantPoolInfo info = NEWMAPPING[i];
+            System.out.print(i + "[" + NEWMAPPING[i] + "]");
+            if(info != null)
+                System.out.print(" #" + info.tag);
+            System.out.println();
         }
     }
     
@@ -55,9 +69,7 @@ public abstract class ConstantPoolInfo implements Info, Cloneable {
         }
         
         if(info != null) {
-            info = (ConstantPoolInfo)info.clone();
-            info.tag = tag;
-            return info;
+            return (ConstantPoolInfo)info.clone();
         }
         
         return null;

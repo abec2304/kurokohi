@@ -1,6 +1,7 @@
 package localhost.abec2304.kurokohi;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class AttrUnknown extends AttributeInfo {
@@ -29,6 +30,24 @@ public class AttrUnknown extends AttributeInfo {
         } while(toRead != 0);
         
         info = pool;
+    }
+    
+    public void write(DataOutputStream dos) throws IOException {
+        writeHeader(dos);
+        if(attributeLength == 0)
+            return;
+        
+        for(int i = 0; i < info.length; i++)
+            dos.write(info[i]);
+    }
+    
+    public void recalculateLength() {
+        attributeLength = 0;
+        if(info == null)
+            return;
+        
+        for(int i = 0; i < info.length; i++)
+            attributeLength += info[i].length;
     }
     
 }
